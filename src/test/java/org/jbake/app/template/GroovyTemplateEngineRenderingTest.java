@@ -66,7 +66,7 @@ public class GroovyTemplateEngineRenderingTest extends AbstractTemplateEngineRen
         	"blog/2012/first-post.html",
         	"papers/published-paper.html"));
         outputStrings.put("categories", Arrays.asList("/blog/2012/first-post.html"));
-        outputStrings.put("categories_index", Arrays.asList("<a href=\"Technology.html\"/>"));
+        outputStrings.put("categories_index", Arrays.asList("<a href=\"/categories/Technology.html\"/>"));
     }
     
   @Test
