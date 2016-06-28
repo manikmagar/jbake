@@ -25,17 +25,24 @@
             <url>http://jonathanbullock.com</url>
             <timezone>0</timezone>
         </developer>
+        <developer>
+            <id>manikmagar</id>
+            <name>Manik Magar</name>
+            <email>manikmagar@gmail.com</email>
+            <url>http://manik.magar.me</url>
+            <timezone>0</timezone>
+        </developer>
     </developers>
 
     <scm>
-        <url>https://github.com/jbake-org/jbake/</url>
-        <connection>scm:git:git@github.com:jbake-org/jbake.git</connection>
-        <developerConnection>scm:git:https://github.com/jbake-org/jbake.git</developerConnection>
+        <url>https://github.com/manikmagar/jbake/</url>
+        <connection>scm:git:git@github.com:manikmagar/jbake.git</connection>
+        <developerConnection>scm:git:https://github.com/manikmagar/jbake.git</developerConnection>
     </scm>
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/jbake-org/jbake/issues</url>
+        <url>https://github.com/manikmagar/jbake/issues</url>
     </issueManagement>
 
     <mailingLists>
