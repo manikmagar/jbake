@@ -6,13 +6,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.apache.commons.configuration.CompositeConfiguration;
@@ -22,7 +19,6 @@ import org.jbake.render.RenderingTool;
 import org.jbake.template.RenderingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 /**
  * All the baking happens in the Oven!
@@ -43,7 +39,7 @@ public class Oven {
 	private File contentsPath;
 	private File assetsPath;
 	private boolean isClearCache;
-	private List<String> errors = new LinkedList<String>();
+	private List<Throwable> errors = new LinkedList<Throwable>();
 	private int renderedCount = 0;
 
     /**
@@ -156,7 +152,7 @@ public class Oven {
                 	try {
                 		renderedCount += tool.render(renderer, db, destination, templatesPath, config);
                 	} catch(RenderingException e) {
-                		errors.add(e.getMessage());
+                		errors.add(e);
                 	}
                 }
 
@@ -230,8 +226,8 @@ public class Oven {
         }
     }
 
-	public List<String> getErrors() {
-		return new ArrayList<String>(errors);
+	public List<Throwable> getErrors() {
+		return new ArrayList<Throwable>(errors);
 	}
     
 }
