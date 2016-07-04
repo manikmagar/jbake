@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class MarkupEngine implements ParserEngine {
     private static final Logger LOGGER = LoggerFactory.getLogger(MarkupEngine.class);
+    private static final String HEADER_SEPARATOR = "~~~~~~";
+
     /**
      * Tests if this markup engine can process the document.
      * @param context the parser context
@@ -90,6 +92,10 @@ public abstract class MarkupEngine implements ParserEngine {
         }
         // then read engine specific headers
         processHeader(context);
+        
+        if (content.get(Crawler.Attributes.DATE) == null) {
+        	content.put(Crawler.Attributes.DATE, new Date(file.lastModified()));
+        }
         
         if (config.getString(Keys.DEFAULT_STATUS) != null) {
         	// default status has been set
@@ -181,7 +187,7 @@ public abstract class MarkupEngine implements ParserEngine {
                     statusFound = true;
                 }
             }
-            if (line.equals("~~~~~~")) {
+            if (line.equals(HEADER_SEPARATOR)) {
                 headerSeparatorFound = true;
                 header.remove(line);
                 break;
@@ -198,10 +204,7 @@ public abstract class MarkupEngine implements ParserEngine {
             }
         }
 
-        if (!headerValid || !statusFound || !typeFound) {
-            return false;
-        }
-        return true;
+        return headerValid && statusFound && typeFound;
     }
 
     /**
@@ -213,40 +216,48 @@ public abstract class MarkupEngine implements ParserEngine {
      */
     private void processHeader(Configuration config, List<String> contents, final Map<String, Object> content) {
         for (String line : contents) {
-            if (line.equals("~~~~~~")) {
+            if (line.equals(HEADER_SEPARATOR)) {
                 break;
-            } else {
-                String[] parts = line.split("=",2);
-                if (parts.length == 2) {
-                    if (parts[0].equalsIgnoreCase("date")) {
-                        DateFormat df = new SimpleDateFormat(config.getString(Keys.DATE_FORMAT));
-                        Date date = null;
-                        try {
-                            date = df.parse(parts[1]);
-                            content.put(parts[0], date);
-                        } catch (ParseException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (parts[0].equalsIgnoreCase("tags")) {
-                        String[] tags = parts[1].split(",");
-                        for( int i=0; i<tags.length; i++ )
-                            tags[i]=tags[i].trim();
-                        content.put(parts[0], tags);
-                    } else if (parts[0].equalsIgnoreCase("categories")){
-                    	List<String> categories = new ArrayList<String>();
-                    	for (String category : parts[1].split(",")){
-                    		categories.add(category.trim());
-                    	}
-                    	content.put(parts[0], categories.toArray(new String[0]));
-                    } else if (parts[1].startsWith("{") && parts[1].endsWith("}")) {
-                        // Json type
-                        content.put(parts[0], JSONValue.parse(parts[1]));
-                    } else {
-                        content.put(parts[0], parts[1]);
-                    }
+            }
+
+            String[] parts = line.split("=",2);
+            if (parts.length != 2) {
+                continue;
+            }
+
+            String key = parts[0];
+            String value = parts[1];
+
+            if (key.equalsIgnoreCase("date")) {
+                DateFormat df = new SimpleDateFormat(config.getString(Keys.DATE_FORMAT));
+                Date date = null;
+                try {
+                    date = df.parse(value);
+                    content.put(key, date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
                 }
+            } else if (key.equalsIgnoreCase("tags")) {
+                content.put(key, getTags(value));
+            } else if (key.equalsIgnoreCase("categories")) {
+                content.put(key, getTags(value));
+            } else if (isJson(value)) {
+                content.put(key, JSONValue.parse(value));
+            } else {
+                content.put(key, value);
             }
         }
+    }
+
+    private String[] getTags(String tagsPart) {
+        String[] tags = tagsPart.split(",");
+        for( int i=0; i<tags.length; i++ )
+            tags[i]=tags[i].trim();
+        return tags;
+    }
+
+    private boolean isJson(String part) {
+        return part.startsWith("{") && part.endsWith("}");
     }
 
     /**
@@ -262,7 +273,7 @@ public abstract class MarkupEngine implements ParserEngine {
             if (inBody) {
                 body.append(line).append("\n");
             }
-            if (line.equals("~~~~~~")) {
+            if (line.equals(HEADER_SEPARATOR)) {
                 inBody = true;
             }
         }

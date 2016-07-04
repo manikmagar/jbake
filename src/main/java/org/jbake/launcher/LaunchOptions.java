@@ -1,8 +1,6 @@
 package org.jbake.launcher;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
@@ -64,7 +62,7 @@ public class LaunchOptions {
 	}
 
 	public boolean isHelpNeeded() {
-		return helpNeeded;
+		return helpNeeded || !(isBake() || isRunServer() || isInit() || source != null || destination != null);
 	}
 	
 	public boolean isRunServer() {
@@ -80,6 +78,6 @@ public class LaunchOptions {
     }
 
     public boolean isBake() {
-		return bake || !(isHelpNeeded() || isRunServer() || isInit());
+    	return bake || (source != null && destination != null);
 	}
 }
