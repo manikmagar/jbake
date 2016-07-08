@@ -215,6 +215,18 @@ public class ContentStore {
 	    return result;
     }
     
+    public Set<String> getAllTags() {
+    	Set<String> result = new HashSet<String>();
+    	for (String docType : DocumentTypes.getDocumentTypes()) {
+    		List<ODocument> docs = query("select tags from " + docType + " where status='published'");
+    		for (ODocument document : docs) {
+    	        String[] tags = DBUtil.toStringArray(document.field("tags"));
+    	        Collections.addAll(result, tags);
+    	    }
+    	}
+    	return result;
+    }
+    
     public Set<String> getCategories() {
     	List<ODocument> docs = this.getAllCategoriesFromPublishedPosts();
 	    Set<String> result = new HashSet<String>();
