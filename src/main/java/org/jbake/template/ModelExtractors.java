@@ -1,5 +1,12 @@
 package org.jbake.template;
 
+import org.jbake.app.ContentStore;
+import org.jbake.model.DocumentTypeUtils;
+import org.jbake.template.model.PublishedCustomExtractor;
+import org.jbake.template.model.TypedDocumentsExtractor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.Enumeration;
@@ -8,26 +15,21 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.jbake.app.ContentStore;
-import org.jbake.model.DocumentTypeUtils;
-import org.jbake.template.model.PublishedCustomExtractor;
-import org.jbake.template.model.TypedDocumentsExtractor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * <p>A singleton class giving access to model extractors. Model extractors are loaded based on classpath. New
  * rendering may be registered either at runtime (not recommanded) or by putting a descriptor file on classpath
- * (recommanded).</p> <p/> <p>The descriptor file must be found in <i>META-INF</i> directory and named
- * <i>org.jbake.template.ModelExtractors.properties</i>. The format of the file is easy:</p> <code>
- * org.jbake.template.model.AllPosts=all_posts<br> org.jbake.template.model.AllContent=all_content<br> </code> <p>where the key
- * is the class of the extractor (must implement {@link ModelExtractor}  and the value is the key by which values
- * are to be accessed in model.</p>
- * <p/>
+ * (recommanded).</p>
+ * <p>The descriptor file must be found in <i>META-INF</i> directory and named
+ * <i>org.jbake.template.ModelExtractors.properties</i>. The format of the file is easy:</p>
+ * <code>org.jbake.template.model.AllPosts=all_posts<br> org.jbake.template.model.AllContent=all_content<br> </code>
+ * <p>where the key is the class of the extractor (must implement {@link ModelExtractor}  and the value is the key
+ * by which values are to be accessed in model.</p>
+ * <p>
  * This class loads the engines only if they are found on classpath. If not, the engine is not registered. This allows
  * JBake to support multiple rendering engines without the explicit need to have them on classpath. This is a better fit
  * for embedding.
+ * </p>
  *
  * @author ndx
  * @author Cédric Champeau
@@ -124,18 +126,16 @@ public class ModelExtractors {
     }
 
     /**
-     * @param key
-     * @return
-     * @category delegate
      * @see java.util.Map#containsKey(java.lang.Object)
+     * @param key A key a {@link ModelExtractor} is registered with
+     * @return true if key is registered
      */
     public boolean containsKey(Object key) {
         return extractors.containsKey(key);
     }
 
     /**
-     * @return
-     * @category delegate
+     * @return  A @{@link Set} of all known keys a @{@link ModelExtractor} is registered with
      * @see java.util.Map#keySet()
      */
     public Set<String> keySet() {

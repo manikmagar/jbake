@@ -50,14 +50,14 @@ public class FreemarkerTemplateEngineRenderingTest extends AbstractTemplateEngin
         config.setProperty(Keys.POSTS_PER_PAGE, 1);
 
         outputStrings.put("index", Arrays.asList(
-                "index.html\">Previous</a>",
-                "index3.html\">Next</a>",
+                "\">Previous</a>",
+                "3/\">Next</a>",
                 "2 of 3"
         ));
 
         renderer.renderIndexPaging("index.html");
 
-        File outputFile = new File(destinationFolder, "index2.html");
+        File outputFile = new File(destinationFolder, 2 + File.separator + "index.html");
         String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
 
         for (String string : getOutputStrings("index")) {

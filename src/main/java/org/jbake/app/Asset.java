@@ -1,5 +1,10 @@
 package org.jbake.app;
 
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -8,23 +13,18 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Deals with assets (static files such as css, js or image files).
  *
- * @author Jonathan Bullock <jonbullock@gmail.com>
+ * @author Jonathan Bullock <a href="mailto:jonbullock@gmail.com">jonbullock@gmail.com</a>
  *
  */
 public class Asset {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Asset.class);
 
-    private File source;
-	private File destination;
+    private final File source;
+	private final File destination;
 	private CompositeConfiguration config;
 	private final List<Throwable> errors = new LinkedList<Throwable>();
 	private final boolean ignoreHidden;
@@ -32,14 +32,15 @@ public class Asset {
 	/**
 	 * Creates an instance of Asset.
 	 *
-	 * @param source
-	 * @param destination
+	 * @param source			Source file for the asset
+	 * @param destination 		Destination (target) directory for asset file
+	 * @param config			Project configuration
 	 */
 	public Asset(File source, File destination, CompositeConfiguration config) {
 		this.source = source;
-		this.config = config;
 		this.destination = destination;
-		ignoreHidden = config.getBoolean(ConfigUtil.Keys.ASSET_IGNORE_HIDDEN, false);
+		this.config = config;
+		this.ignoreHidden = config.getBoolean(ConfigUtil.Keys.ASSET_IGNORE_HIDDEN, false);
 	}
 
 	/**
@@ -48,38 +49,38 @@ public class Asset {
 	 * @param path	The starting path
 	 */
 	public void copy(File path) {
-		File[] assets = path.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File file) {
-				return !ignoreHidden || !file.isHidden();
-			}
-		});
-		if (assets != null) {
-			Arrays.sort(assets);
-			for (int i = 0; i < assets.length; i++) {
-				if (assets[i].isFile()) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("Copying [" + assets[i].getPath() + "]...");
-					File sourceFile = assets[i];
-					File destFile = new File(sourceFile.getPath().replace(source.getPath()+File.separator+config.getString(ConfigUtil.Keys.ASSET_FOLDER), destination.getPath()));
-					try {
-						FileUtils.copyFile(sourceFile, destFile);
-						sb.append("done!");
-						LOGGER.info(sb.toString());
-					} catch (IOException e) {
-						sb.append("failed!");
-						LOGGER.error(sb.toString(), e);
-						e.printStackTrace();
-						errors.add(e);
-					}
-				}
+        copy(path, destination);
+    }
 
-				if (assets[i].isDirectory()) {
-					copy(assets[i]);
-				}
-			}
-		}
-	}
+    private void copy(File sourceFolder, File targetFolder) {
+        final File[] assets = sourceFolder.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return !ignoreHidden || !file.isHidden();
+            }
+        });
+        if (assets != null) {
+            Arrays.sort(assets);
+            for (File asset : assets) {
+                final File target = new File(targetFolder, asset.getName());
+                if (asset.isFile()) {
+                    final StringBuilder sb = new StringBuilder();
+                    sb.append("Copying [").append(asset.getPath()).append("]... ");
+                    try {
+                        FileUtils.copyFile(asset, target);
+                        sb.append("done!");
+                        LOGGER.info(sb.toString());
+                    } catch (IOException e) {
+                        sb.append("failed!");
+                        LOGGER.error(sb.toString(), e);
+                        errors.add(e);
+                    }
+                } else if (asset.isDirectory()) {
+                    copy(asset, target);
+                }
+            }
+        }
+    }
 
 	public List<Throwable> getErrors() {
 		return new ArrayList<Throwable>(errors);

@@ -1,8 +1,5 @@
 package org.jbake.launcher;
 
-import java.io.File;
-import java.io.StringWriter;
-
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.jbake.app.ConfigUtil;
@@ -13,10 +10,15 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import java.io.File;
+import java.io.StringWriter;
+import java.text.MessageFormat;
+import java.util.List;
+
 /**
  * Launcher for JBake.
  * 
- * @author Jonathan Bullock <jonbullock@gmail.com>
+ * @author Jonathan Bullock <a href="mailto:jonbullock@gmail.com">jonbullock@gmail.com</a>
  *
  */
 public class Main {
@@ -27,7 +29,7 @@ public class Main {
 	/**
 	 * Runs the app with the given arguments.
 	 *
-	 * @param args
+	 * @param args	Application arguments
 	 */
 	public static void main(final String[] args) {
 		try {
@@ -56,9 +58,9 @@ public class Main {
 	/**
 	 * Optional constructor to externalize dependencies.
 	 *
-	 * @param baker
-	 * @param jetty
-	 * @param watcher
+	 * @param baker A {@link Baker} instance
+	 * @param jetty A {@link JettyServer} instance
+	 * @param watcher A {@link BakeWatcher} instance
 	 */
 	protected Main(Baker baker, JettyServer jetty, BakeWatcher watcher) {
 		this.baker = baker;
@@ -73,11 +75,10 @@ public class Main {
 
 		final CompositeConfiguration config;
 		try {
-			config = ConfigUtil.load( res.getSource() );
+			config = ConfigUtil.load( res.getSource(), res.isRunServer() );
 		} catch( final ConfigurationException e ) {
 			throw new JBakeException( "Configuration error: " + e.getMessage(), e );
 		}
-
 		run(res, config);
 	}
 
@@ -148,7 +149,7 @@ public class Main {
 		sw.append(ALT_USAGE_PREFIX + " [OPTION]... [<value>...]\n\n");
 		sw.append("Options:");
 		System.out.println(sw.toString());
-		parser.setUsageWidth(100);
+		parser.getProperties().withUsageWidth(100);
 		parser.printUsage(System.out);
 	}
 

@@ -1,6 +1,14 @@
 package org.jbake.app;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Locale;
+
 import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.io.FileUtils;
 import org.jbake.app.ConfigUtil.Keys;
 import org.junit.Assert;
 import org.junit.Before;
@@ -8,29 +16,22 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.net.URL;
-
 public class AssetTest {
 
-	private CompositeConfiguration config;
+    private CompositeConfiguration config;
 
 	@Before
     public void setup() throws Exception {
-		config = ConfigUtil.load(new File(this.getClass().getResource("/").getFile()));
-        Assert.assertEquals(".html", config.getString(Keys.OUTPUT_EXTENSION));
-		readOnlyFolder.getRoot().setReadOnly();
+		config = ConfigUtil.load(new File(this.getClass().getResource("/fixture").getFile()));
+		Assert.assertEquals(".html", config.getString(Keys.OUTPUT_EXTENSION));
 	}
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
 
-	@Rule
-	public TemporaryFolder readOnlyFolder = new TemporaryFolder();
-
 	@Test
 	public void copy() throws Exception {
-		URL assetsUrl = this.getClass().getResource("/assets");
+		URL assetsUrl = this.getClass().getResource("/fixture/assets");
 		File assets = new File(assetsUrl.getFile());
 		Asset asset = new Asset(assets.getParentFile(), folder.getRoot(), config);
 		asset.copy(assets);
@@ -48,7 +49,7 @@ public class AssetTest {
 	@Test
 	public void copyCustomFolder() throws Exception {
 		config.setProperty(ConfigUtil.Keys.ASSET_FOLDER, "media");
-		URL assetsUrl = this.getClass().getResource("/media");
+		URL assetsUrl = this.getClass().getResource("/fixture/media");
 		File assets = new File(assetsUrl.getFile());
 		Asset asset = new Asset(assets.getParentFile(), folder.getRoot(), config);
 		asset.copy(assets);
@@ -63,8 +64,9 @@ public class AssetTest {
 	public void copyIgnore() throws Exception {
 		config.setProperty(Keys.ASSET_FOLDER, "ignorables");
 		config.setProperty(Keys.ASSET_IGNORE_HIDDEN, "true");
-		URL assetsUrl = this.getClass().getResource("/ignorables");
+		URL assetsUrl = this.getClass().getResource("/fixture/ignorables");
 		File assets = new File(assetsUrl.getFile());
+		hideAssets(assets);
 		Asset asset = new Asset(assets.getParentFile(), folder.getRoot(), config);
 		asset.copy(assets);
 
@@ -77,15 +79,36 @@ public class AssetTest {
 	}
 
 	/**
+	 * Hides the assets on windows that start with a dot (e.g. .test.txt but not test.txt) so File.isHidden() returns true for those files.
+	 */
+	private void hideAssets(File assets) throws IOException, InterruptedException {
+		if (isWindows()) {
+			final File[] hiddenFiles = assets.listFiles(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.startsWith(".");
+				}
+			});
+			for (File file : hiddenFiles) {
+				final Process process = Runtime.getRuntime().exec(new String[] {"attrib" , "+h", file.getAbsolutePath()});
+				process.waitFor();
+			}
+		}
+	}
+
+	/**
 	 * Primary intention is to extend test cases to increase coverage.
 	 *
 	 * @throws Exception
 	 */
 	@Test
 	public void testWriteProtected() throws Exception {
-		URL assetsUrl = this.getClass().getResource("/assets");
+		URL assetsUrl = this.getClass().getResource("/fixture/assets");
 		File assets = new File(assetsUrl.getFile());
-		Asset asset = new Asset(assets.getParentFile(), readOnlyFolder.getRoot(), config);
+		final File cssFile = new File(folder.newFolder("css"), "bootstrap.min.css");
+		FileUtils.touch(cssFile);
+		cssFile.setReadOnly();
+		Asset asset = new Asset(assets.getParentFile(), folder.getRoot(), config);
 		asset.copy(assets);
 
 		Assert.assertFalse("At least one error during copy expected", asset.getErrors().isEmpty());
@@ -99,9 +122,14 @@ public class AssetTest {
 	@Test
 	public void testUnlistable() throws Exception {
 		config.setProperty(Keys.ASSET_FOLDER, "non-existent");
-		URL assetsUrl = this.getClass().getResource("/");
+		URL assetsUrl = this.getClass().getResource("/fixture");
 		File assets = new File(assetsUrl.getFile() + File.separatorChar + "non-existent");
-		Asset asset = new Asset(assets.getParentFile(), readOnlyFolder.getRoot(), config);
+		Asset asset = new Asset(assets.getParentFile(), folder.getRoot(), config);
 		asset.copy(assets);
+	}
+
+	private boolean isWindows() {
+		final String os = System.getProperty("os.name");
+		return os != null && os.toLowerCase(Locale.ENGLISH).contains("win");
 	}
 }

@@ -15,7 +15,6 @@ import org.junit.Test;
 import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,17 +23,17 @@ public class CrawlerTest {
     private CompositeConfiguration config;
     private ContentStore db;
     private File sourceFolder;
-	
-	@Before
+
+    @Before
     public void setup() throws Exception {
-        URL sourceUrl = this.getClass().getResource("/");
+        URL sourceUrl = this.getClass().getResource("/fixture");
 
         sourceFolder = new File(sourceUrl.getFile());
         if (!sourceFolder.exists()) {
             throw new Exception("Cannot find sample data structure!");
         }
 
-        config = ConfigUtil.load(new File(this.getClass().getResource("/").getFile()));
+        config = ConfigUtil.load(sourceFolder);
         Assert.assertEquals(".html", config.getString(Keys.OUTPUT_EXTENSION));
         db = DBUtil.createDataStore("memory", "documents" + System.currentTimeMillis());
     }
@@ -87,7 +86,7 @@ public class CrawlerTest {
 
         CompositeConfiguration config = new CompositeConfiguration();
         config.addConfiguration(new MapConfiguration(testProperties));
-        config.addConfiguration(ConfigUtil.load(new File(this.getClass().getResource("/").getFile())));
+        config.addConfiguration(ConfigUtil.load(sourceFolder));
 
         Crawler crawler = new Crawler(db, sourceFolder, config);
         crawler.crawl(new File(sourceFolder.getPath() + File.separator + config.getString(Keys.CONTENT_FOLDER)));
@@ -102,6 +101,8 @@ public class CrawlerTest {
 
             Assert.assertThat(model.get("noExtensionUri"), RegexMatcher.matches(noExtensionUri));
             Assert.assertThat(model.get("uri"), RegexMatcher.matches(noExtensionUri + "index\\.html"));
+            
+            assertThat(model).containsEntry("rootpath","../../../");
         }
     }
 

@@ -1,6 +1,8 @@
 package org.jbake.app;
 
 import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.io.FilenameUtils;
 import org.jbake.app.ConfigUtil.Keys;
 import org.jbake.model.DocumentAttributes;
 import org.jbake.model.DocumentTypes;
@@ -11,19 +13,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * All the baking happens in the Oven!
  *
- * @author Jonathan Bullock <jonbullock@gmail.com>
+ * @author Jonathan Bullock <a href="mailto:jonbullock@gmail.com">jonbullock@gmail.com</a>
  */
 public class Oven {
 
@@ -43,16 +40,23 @@ public class Oven {
 
     /**
      * Delegate c'tor to prevent API break for the moment.
+     *
+     * @param source                   Project source directory
+     * @param destination              The destination folder
+     * @param isClearCache             Should the cache be cleaned
+     * @throws ConfigurationException  if configuration is not loaded correctly
      */
-    public Oven(final File source, final File destination, final boolean isClearCache) throws Exception {
+    public Oven(final File source, final File destination, final boolean isClearCache) throws ConfigurationException {
         this(source, destination, ConfigUtil.load(source), isClearCache);
     }
 
     /**
      * Creates a new instance of the Oven with references to the source and destination folders.
      *
-     * @param source      The source folder
-     * @param destination The destination folder
+     * @param source          Project source directory
+     * @param destination     The destination folder
+     * @param config          Project configuration
+     * @param isClearCache    Should the cache be cleaned
      */
     public Oven(final File source, final File destination, final CompositeConfiguration config, final boolean isClearCache) {
         this.source = source;
@@ -92,7 +96,7 @@ public class Oven {
     }
 
     private File setupPathFromConfig(String key) {
-        return new File(source, config.getString(key));
+    	return new File(FilenameUtils.concat(source.getAbsolutePath(), config.getString(key)));
     }
 
     /**
@@ -105,11 +109,11 @@ public class Oven {
         templatesPath = setupRequiredFolderFromConfig(Keys.TEMPLATE_FOLDER);
         contentsPath = setupRequiredFolderFromConfig(Keys.CONTENT_FOLDER);
         assetsPath = setupPathFromConfig(Keys.ASSET_FOLDER);
-        if (!assetsPath.exists()) {
-            LOGGER.warn("No asset folder was found!");
-        }
-        ensureDestination();
-    }
+		if (!assetsPath.exists()) {
+			LOGGER.warn("No asset folder was found!");
+		}
+		ensureDestination();
+	}
 
 	private File setupRequiredFolderFromConfig(final String key) {
 		final File path = setupPathFromConfig(key);
@@ -122,7 +126,6 @@ public class Oven {
 	/**
 	 * All the good stuff happens in here...
 	 *
-	 * @throws JBakeException
 	 */
 	public void bake() {
 			final ContentStore db = DBUtil.createDataStore(config.getString(Keys.DB_STORE), config.getString(Keys.DB_PATH));

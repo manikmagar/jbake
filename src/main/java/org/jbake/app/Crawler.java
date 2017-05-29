@@ -1,7 +1,11 @@
 package org.jbake.app;
 
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Map;
+
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.io.FilenameUtils;
 import org.jbake.app.ConfigUtil.Keys;
@@ -12,17 +16,12 @@ import org.jbake.model.DocumentTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-
-import static java.io.File.separator;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Crawls a file system looking for content.
  *
- * @author Jonathan Bullock <jonbullock@gmail.com>
+ * @author Jonathan Bullock <a href="mailto:jonbullock@gmail.com">jonbullock@gmail.com</a>
  */
 public class Crawler {
 	public interface Attributes {
@@ -62,11 +61,14 @@ public class Crawler {
 
     /**
      * Creates new instance of Crawler.
+	 * @param db		Database instance for content
+	 * @param source	Base directory where content directory is located
+	 * @param config	Project configuration
      */
     public Crawler(ContentStore db, File source, CompositeConfiguration config) {
         this.db = db;
         this.config = config;
-        this.contentPath = source.getPath() + separator + config.getString(ConfigUtil.Keys.CONTENT_FOLDER);
+        this.contentPath = FilenameUtils.concat(source.getAbsolutePath(), config.getString(ConfigUtil.Keys.CONTENT_FOLDER));
         this.parser = new Parser(config, contentPath);
     }
 
@@ -176,6 +178,10 @@ public class Crawler {
             if (config.getBoolean(Keys.URI_NO_EXTENSION)) {
             	fileContents.put(Attributes.NO_EXTENSION_URI, uri.replace("/index.html", "/"));
             }
+            
+            
+            // Prevent image source url's from breaking
+            HtmlUtil.fixImageSourceUrls(fileContents);
 
             ODocument doc = new ODocument(documentType);
             doc.fields(fileContents);
@@ -199,6 +205,9 @@ public class Crawler {
     	for (int i = 0; i < parentCount; i++) {
     		sb.append("../");
     	}
+    	if (config.getBoolean(Keys.URI_NO_EXTENSION)) {
+        	sb.append("../");
+        }
     	return sb.toString();
     }
 

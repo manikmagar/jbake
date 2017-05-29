@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Render output to a file.
  *
- * @author Jonathan Bullock <jonbullock@gmail.com>
+ * @author Jonathan Bullock <a href="mailto:jonbullock@gmail.com">jonbullock@gmail.com</a>
  */
 public class Renderer {
 
@@ -138,7 +138,7 @@ public class Renderer {
      * @param db            The database holding the content
      * @param destination   The destination folder
      * @param templatesPath The templates folder
-     * @param config
+     * @param config        Project configuration
      */
     public Renderer(ContentStore db, File destination, File templatesPath, CompositeConfiguration config) {
         this.destination = destination;
@@ -150,11 +150,11 @@ public class Renderer {
     /**
      * Creates a new instance of Renderer with supplied references to folders and the instance of DelegatingTemplateEngine to use.
      *
-     * @param db            The database holding the content
-     * @param destination   The destination folder
-     * @param templatesPath The templates folder
-     * @param config
-     * @param renderingEngine The instance of DelegatingTemplateEngine to use
+     * @param db                The database holding the content
+     * @param destination       The destination folder
+     * @param templatesPath     The templates folder
+     * @param config            Project configuration
+     * @param renderingEngine   The instance of DelegatingTemplateEngine to use
      */
     public Renderer(ContentStore db, File destination, File templatesPath, CompositeConfiguration config, DelegatingTemplateEngine renderingEngine) {
         this.destination = destination;
@@ -172,8 +172,8 @@ public class Renderer {
     /**
      * Render the supplied content to a file.
      *
-     * @param content The content to renderDocument
-     * @throws Exception
+     * @param content       The content to renderDocument
+     * @throws Exception    if IOException or SecurityException are raised
      */
     public void render(Map<String, Object> content) throws Exception {
         String docType = (String) content.get(Crawler.Attributes.TYPE);
@@ -213,7 +213,7 @@ public class Renderer {
         } catch (Exception e) {
             sb.append("failed!");
             LOGGER.error(sb.toString(), e);
-            throw new Exception("Failed to render file. Cause: " + e.getMessage(), e);
+            throw new Exception("Failed to render file " + outputFile.getAbsolutePath() + ". Cause: " + e.getMessage(), e);
         }
     }
 
@@ -248,7 +248,7 @@ public class Renderer {
      * Render an index file using the supplied content.
      *
      * @param indexFile The name of the output file
-     * @throws Exception
+     * @throws Exception if IOException or SecurityException are raised
      */
     public void renderIndex(String indexFile) throws Exception {
 
@@ -263,18 +263,14 @@ public class Renderer {
             //paging makes no sense. render single index file instead
             renderIndex(indexFile);
         } else {
-
             PagingHelper pagingHelper = new PagingHelper(totalPosts, postsPerPage);
 
             Map<String, Object> model = new HashMap<String, Object>();
             model.put("renderer", renderingEngine);
-            model.put("content", buildSimpleModel("masterindex"));
             model.put("numberOfPages", pagingHelper.getNumberOfPages());
-
-            db.setLimit(postsPerPage);
-
+            
             try {
-
+                db.setLimit(postsPerPage);
                 for (int pageStart = 0, page = 1; pageStart < totalPosts; pageStart += postsPerPage, page++) {
                     String fileName = indexFile;
 
@@ -284,6 +280,13 @@ public class Renderer {
                     model.put("previousFileName", previous);
                     String nextFileName = pagingHelper.getNextFileName(page, fileName);
                     model.put("nextFileName", nextFileName);
+                    
+                    Map<String, Object> contentModel =  buildSimpleModel("masterindex");
+                    
+                    if(page > 1){
+                    	contentModel.put(Attributes.ROOTPATH, "../");
+                    }
+                    model.put("content", contentModel);
 
                     // Add page number to file name
                     fileName = pagingHelper.getCurrentFileName(page, fileName);
@@ -300,7 +303,9 @@ public class Renderer {
     /**
      * Render an XML sitemap file using the supplied content.
      *
-     * @throws Exception
+     * @param sitemapFile       configuration for site map
+     * @throws Exception        if can't create correct default rendering config
+     *
      * @see <a href="https://support.google.com/webmasters/answer/156184?hl=en&ref_topic=8476">About Sitemaps</a>
      * @see <a href="http://www.sitemaps.org/">Sitemap protocol</a>
      */
@@ -311,8 +316,8 @@ public class Renderer {
     /**
      * Render an XML feed file using the supplied content.
      *
-     * @param feedFile The name of the output file
-     * @throws Exception
+     * @param feedFile      The name of the output file
+     * @throws Exception    if default rendering configuration is not loaded correctly
      */
     public void renderFeed(String feedFile) throws Exception {
         render(new DefaultRenderingConfig(feedFile, "feed"));
@@ -321,8 +326,8 @@ public class Renderer {
     /**
      * Render an archive file using the supplied content.
      *
-     * @param archiveFile The name of the output file
-     * @throws Exception
+     * @param archiveFile   The name of the output file
+     * @throws Exception    if default rendering configuration is not loaded correctly
      */
     public void renderArchive(String archiveFile) throws Exception {
         render(new DefaultRenderingConfig(archiveFile, "archive"));
@@ -332,7 +337,8 @@ public class Renderer {
      * Render tag files using the supplied content.
      *
      * @param tagPath The output path
-     * @throws Exception
+     * @return Number of rendered tags
+     * @throws Exception if cannot render tags correctly
      */
     public int renderTags(String tagPath) throws Exception {
     	int renderedCount = 0;
