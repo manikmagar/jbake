@@ -5,6 +5,10 @@ import org.apache.commons.vfs2.util.Os;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class TestUtils {
 
@@ -31,7 +35,8 @@ public class TestUtils {
     }
 
     public static File getTestResourcesAsSourceFolder() {
-        return new File(TestUtils.class.getResource("/fixture").getFile());
+        Path path = Paths.get( "src","test","resources","fixture");
+        return path.toFile();
     }
 
     public static File newFolder(File base, String folderName) {
