@@ -12,6 +12,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,10 +48,11 @@ public class BuiltInProjectsTest {
 
     @Before
     public void setup() throws IOException {
+        Path binPath = Paths.get("build","install", "jbake", "bin");
         if ( Os.isFamily(Os.OS_FAMILY_WINDOWS) ) {
-            jbakeExecutable = new File("build\\install\\jbake\\bin\\jbake.bat").getAbsolutePath();
+            jbakeExecutable = Paths.get(binPath.toString(), "jbake.bat").toAbsolutePath().toString();
         } else {
-            jbakeExecutable = new File("build/install/jbake/bin/jbake").getAbsolutePath();
+            jbakeExecutable = Paths.get(binPath.toString(), "jbake").toAbsolutePath().toString();
         }
         projectFolder = folder.newFolder("project");
         templateFolder = new File(projectFolder, "templates");
