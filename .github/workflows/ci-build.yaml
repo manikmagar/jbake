@@ -20,4 +20,4 @@ jobs:
                     restore-keys: |
                         ${{ runner.os }}-gradle
             -   name: build-gradle
-                run: ./gradlew build --build-cache -s
+                run: ./gradlew build --scan --build-cache -s
