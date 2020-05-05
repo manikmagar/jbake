@@ -102,6 +102,8 @@ public abstract class AbstractTemplateEngineRenderingTest extends ContentStoreIn
         renderer = new Renderer(db, config);
 
         setupExpectedOutputStrings();
+        System.out.println("Template extension:" + templateExtension);
+        System.out.println("Template extension:" + templateFolder);
     }
 
     private void setupExpectedOutputStrings() {
